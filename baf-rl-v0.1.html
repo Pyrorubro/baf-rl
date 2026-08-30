@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BAF RL — RocketLab</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: Arial, sans-serif;
+      color: white;
+      background: #07111f;
+    }
+    #entrada {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background: radial-gradient(circle at 50% 45%,#102f4c 0%,#07111f 48%,#030811 100%);
+      transition: opacity .55s ease, visibility .55s ease;
+    }
+    #entrada.oculta { opacity: 0; visibility: hidden; pointer-events: none; }
+    #marcaEntrada { width: min(680px,100%); text-align: center; }
+    #apresenta { margin-bottom: 16px; color: #8fdcff; font-size: 12px; font-weight: bold; letter-spacing: .28em; }
+    #sigla { margin: 0; font-size: clamp(64px,17vw,156px); font-weight: 800; line-height: .84; letter-spacing: -.055em; text-shadow: 0 0 35px rgba(56,189,248,.35); }
+    #nome { margin: 20px 0 8px; color: #58c8ff; font-size: clamp(22px,4vw,36px); font-weight: bold; }
+    #subtitulo { margin: 0 auto 28px; color: #b8c8d8; font-size: clamp(13px,2.4vw,16px); }
+    button {
+      width: 100%;
+      margin-top: 12px;
+      padding: 10px;
+      border: 1px solid #58c8ff;
+      border-radius: 8px;
+      color: white;
+      background: #102b42;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    button:hover { background: #174668; }
+    #iniciar { width: min(300px,100%); padding: 13px 22px; letter-spacing: .08em; background: #0f4568; }
+    #painel {
+      position: absolute;
+      z-index: 10;
+      top: 12px;
+      left: 12px;
+      width: 340px;
+      max-height: calc(100vh - 24px);
+      overflow-y: auto;
+      padding: 16px;
+      border: 1px solid #315574;
+      border-radius: 12px;
+      background: rgba(7,17,31,.94);
+      box-shadow: 0 8px 30px rgba(0,0,0,.4);
+    }
+    h1 { margin: 0 0 4px; color: #58c8ff; font-size: 20px; }
+    p { margin: 0 0 12px; color: #b8c8d8; font-size: 13px; line-height: 1.4; }
+    .grupo {
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 1px solid #294761;
+    }
+    .grupoTitulo {
+      margin-bottom: 8px;
+      color: #8fdcff;
+      font-size: 12px;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+    label { display: block; margin-top: 10px; font-size: 13px; }
+    input[type="range"], select { width: 100%; margin-top: 6px; }
+    select, input[type="number"] {
+      border: 1px solid #315574;
+      border-radius: 6px;
+      color: white;
+      background: #10253a;
+      padding: 7px;
+    }
+    .linha {
+      display: grid;
+      grid-template-columns: 1fr 92px;
+      align-items: center;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .linha input[type="number"] { width: 100%; }
+    .valor { color: #58c8ff; font-weight: bold; }
+    #resultado {
+      margin-top: 12px;
+      padding: 10px;
+      border-radius: 8px;
+      background: #10253a;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+    #aviso {
+      position: absolute;
+      right: 15px;
+      bottom: 15px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      background: rgba(0,0,0,.55);
+      color: #c8d4df;
+      font-size: 12px;
+    }
+    canvas { display: block; }
+    @media (max-width: 700px) {
+      #painel {
+        top: 8px;
+        left: 8px;
+        width: min(340px, calc(100vw - 16px));
+        max-height: calc(100dvh - 16px);
+      }
+      #aviso { display: none; }
+    }
+  </style>
+  <script type="importmap">
+    {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"}}
+  </script>
+</head>
+<body>
+  <section id="entrada">
+    <div id="marcaEntrada">
+      <div id="apresenta">BUNKERDELTA APRESENTA</div>
+      <div id="sigla">BAF RL</div>
+      <div id="nome">BAF RocketLab</div>
+      <p id="subtitulo">Construtor educacional de foguetes de garrafa PET em 3D</p>
+      <button id="iniciar" type="button">INICIAR ROCKETLAB</button>
+    </div>
+  </section>
+
+  <div id="painel">
+    <h1>BAF RocketLab</h1>
+    <p>Versão 0.1 — construtor paramétrico de foguete PET.</p>
+
+    <div class="grupo">
+      <div class="grupoTitulo">Garrafa</div>
+      <label>Volume da garrafa
+        <select id="volume">
+          <option value="1.5">1,5 L</option>
+          <option value="2" selected>2,0 L</option>
+          <option value="2.5">2,5 L</option>
+        </select>
+      </label>
+
+      <div class="linha">
+        <label for="comprimento">Comprimento do corpo</label>
+        <input id="comprimento" type="number" min="180" max="450" step="5" value="310">
+      </div>
+      <div class="linha">
+        <label for="diametro">Diâmetro máximo</label>
+        <input id="diametro" type="number" min="70" max="130" step="1" value="105">
+      </div>
+      <div class="linha">
+        <label for="gargalo">Diâmetro do gargalo</label>
+        <input id="gargalo" type="number" min="20" max="40" step="1" value="28">
+      </div>
+    </div>
+
+    <div class="grupo">
+      <div class="grupoTitulo">Ogiva</div>
+      <label>Formato
+        <select id="tipoOgiva">
+          <option value="conica" selected>Cônica</option>
+          <option value="arredondada">Arredondada</option>
+          <option value="sem">Sem ogiva</option>
+        </select>
+      </label>
+      <div class="linha">
+        <label for="ogiva">Comprimento da ogiva</label>
+        <input id="ogiva" type="number" min="0" max="220" step="5" value="120">
+      </div>
+    </div>
+
+    <div class="grupo">
+      <div class="grupoTitulo">Aletas</div>
+      <label>Quantidade
+        <select id="aletas">
+          <option value="3" selected>3</option>
+          <option value="4">4</option>
+        </select>
+      </label>
+      <div class="linha">
+        <label for="alturaAleta">Altura</label>
+        <input id="alturaAleta" type="number" min="20" max="140" step="5" value="70">
+      </div>
+      <div class="linha">
+        <label for="cordaAleta">Corda</label>
+        <input id="cordaAleta" type="number" min="30" max="180" step="5" value="110">
+      </div>
+    </div>
+
+    <div class="grupo">
+      <div class="grupoTitulo">Visualização</div>
+      <button id="resetar" type="button">Centralizar câmera</button>
+      <div id="resultado">
+        Comprimento total: <strong><span id="total">430</span> mm</strong><br>
+        Diâmetro: <strong><span id="diametroOut">105</span> mm</strong><br>
+        Aletas: <strong><span id="aletasOut">3</span></strong><br>
+        Status: <span class="valor">modelo paramétrico ativo</span>
+      </div>
+    </div>
+  </div>
+
+  <div id="aviso">Arraste para girar • Role para aproximar</div>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x07111f);
+
+    const camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 0.1, 1000);
+    camera.position.set(8, 4.5, 9);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(innerWidth, innerHeight);
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    document.body.appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.target.set(0, 0, 0);
+
+    scene.add(new THREE.AmbientLight(0xffffff, 1.35));
+
+    const key = new THREE.DirectionalLight(0xffffff, 2.8);
+    key.position.set(5, 8, 6);
+    scene.add(key);
+
+    const fill = new THREE.DirectionalLight(0x38bdf8, 1.6);
+    fill.position.set(-5, 2, -5);
+    scene.add(fill);
+
+    const grade = new THREE.GridHelper(20, 20, 0x315574, 0x17324a);
+    grade.position.y = -2.8;
+    scene.add(grade);
+
+    const foguete = new THREE.Group();
+    foguete.rotation.z = -Math.PI / 2;
+    scene.add(foguete);
+
+    const el = id => document.getElementById(id);
+
+    function limparGrupo(grupo) {
+      while (grupo.children.length) {
+        const obj = grupo.children.pop();
+        obj.geometry?.dispose?.();
+        if (Array.isArray(obj.material)) obj.material.forEach(m => m.dispose?.());
+        else obj.material?.dispose?.();
+      }
+    }
+
+    function mat(cor, metal=0.18, rug=0.55) {
+      return new THREE.MeshStandardMaterial({ color: cor, metalness: metal, roughness: rug });
+    }
+
+    function criarAleta(corda, altura, espessura) {
+      const shape = new THREE.Shape();
+      shape.moveTo(-corda * 0.45, 0);
+      shape.lineTo(corda * 0.40, 0);
+      shape.lineTo(corda * 0.12, altura);
+      shape.lineTo(-corda * 0.30, altura * 0.78);
+      shape.closePath();
+      const geo = new THREE.ExtrudeGeometry(shape, { depth: espessura, bevelEnabled: false });
+      geo.translate(0, 0, -espessura / 2);
+      return geo;
+    }
+
+    function construirFoguete() {
+      limparGrupo(foguete);
+
+      const corpoMM = +el("comprimento").value;
+      const diamMM = +el("diametro").value;
+      const gargaloMM = +el("gargalo").value;
+      const ogivaMM = +el("ogiva").value;
+      const tipo = el("tipoOgiva").value;
+      const qtdAletas = +el("aletas").value;
+      const alturaAletaMM = +el("alturaAleta").value;
+      const cordaAletaMM = +el("cordaAleta").value;
+
+      const escala = 1 / 100;
+      const corpo = corpoMM * escala;
+      const raio = (diamMM * escala) / 2;
+      const gargalo = (gargaloMM * escala) / 2;
+      const ogiva = ogivaMM * escala;
+      const alturaAleta = alturaAletaMM * escala;
+      const cordaAleta = cordaAletaMM * escala;
+
+      const materialPET = new THREE.MeshPhysicalMaterial({
+        color: 0xbfe9ff,
+        transparent: true,
+        opacity: 0.45,
+        transmission: 0.15,
+        roughness: 0.2,
+        metalness: 0.05
+      });
+
+      const corpoGeo = new THREE.CylinderGeometry(raio, raio, corpo * 0.74, 48, 1, false);
+      const corpoMesh = new THREE.Mesh(corpoGeo, materialPET);
+      corpoMesh.position.y = -corpo * 0.03;
+      foguete.add(corpoMesh);
+
+      const ombroGeo = new THREE.CylinderGeometry(gargalo * 1.6, raio, corpo * 0.16, 48);
+      const ombroMesh = new THREE.Mesh(ombroGeo, materialPET);
+      ombroMesh.position.y = corpo * 0.42;
+      foguete.add(ombroMesh);
+
+      const gargaloGeo = new THREE.CylinderGeometry(gargalo, gargalo * 1.15, corpo * 0.10, 40);
+      const gargaloMesh = new THREE.Mesh(gargaloGeo, mat(0xdce8ef, 0.15, 0.4));
+      gargaloMesh.position.y = corpo * 0.55;
+      foguete.add(gargaloMesh);
+
+      if (tipo !== "sem" && ogivaMM > 0) {
+        let ogivaGeo;
+        if (tipo === "conica") {
+          ogivaGeo = new THREE.ConeGeometry(raio * 0.96, ogiva, 48);
+        } else {
+          ogivaGeo = new THREE.SphereGeometry(raio * 0.96, 48, 32, 0, Math.PI * 2, 0, Math.PI / 2);
+          ogivaGeo.scale(1, Math.max(0.9, ogiva / raio), 1);
+        }
+        const ogivaMesh = new THREE.Mesh(ogivaGeo, mat(0xe8edf2, 0.2, 0.35));
+        ogivaMesh.position.y = -corpo * 0.52 - ogiva * 0.48;
+        if (tipo === "arredondada") ogivaMesh.rotation.x = Math.PI;
+        foguete.add(ogivaMesh);
+      }
+
+      const aletaGeo = criarAleta(cordaAleta, alturaAleta, Math.max(0.04, diamMM * escala * 0.02));
+      for (let i = 0; i < qtdAletas; i++) {
+        const ang = i * (Math.PI * 2 / qtdAletas);
+        const aleta = new THREE.Mesh(aletaGeo.clone(), mat(0x58c8ff, 0.2, 0.45));
+        aleta.position.y = -corpo * 0.24;
+        aleta.rotation.y = ang;
+        aleta.position.x = Math.cos(ang) * raio * 0.98;
+        aleta.position.z = Math.sin(ang) * raio * 0.98;
+        aleta.lookAt(0, aleta.position.y, 0);
+        aleta.rotateZ(Math.PI / 2);
+        foguete.add(aleta);
+      }
+
+      const baseGeo = new THREE.TorusGeometry(raio * 0.96, Math.max(0.03, raio * 0.05), 10, 48);
+      const base = new THREE.Mesh(baseGeo, mat(0x78909c, 0.35, 0.5));
+      base.rotation.x = Math.PI / 2;
+      base.position.y = -corpo * 0.40;
+      foguete.add(base);
+
+      el("total").textContent = Math.round(corpoMM + (tipo === "sem" ? 0 : ogivaMM));
+      el("diametroOut").textContent = diamMM;
+      el("aletasOut").textContent = qtdAletas;
+    }
+
+    ["comprimento","diametro","gargalo","ogiva","tipoOgiva","aletas","alturaAleta","cordaAleta","volume"].forEach(id => {
+      el(id).addEventListener("input", construirFoguete);
+      el(id).addEventListener("change", construirFoguete);
+    });
+
+    el("resetar").addEventListener("click", () => {
+      camera.position.set(8, 4.5, 9);
+      controls.target.set(0,0,0);
+      controls.update();
+    });
+
+    el("iniciar").addEventListener("click", () => {
+      el("entrada").classList.add("oculta");
+      setTimeout(() => el("entrada").hidden = true, 600);
+    });
+
+    construirFoguete();
+
+    function animar() {
+      requestAnimationFrame(animar);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    animar();
+
+    addEventListener("resize", () => {
+      camera.aspect = innerWidth / innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(innerWidth, innerHeight);
+    });
+  </script>
+</body>
+</html>
